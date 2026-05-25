@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alice Image Generation — Architecture Diagram</title>
+<style>
+  :root {
+    --bg0: #f6f3fc;
+    --bg1: #efeaf8;
+    --card: #ffffff;
+    --card2: #f3eefb;
+    --line: #d8cdf0;
+    --accent: #6d28d9;
+    --accent2: #7c3aed;
+    --accent-soft: #8b5cf6;
+    --pink: #c026a3;
+    --green: #0f9d6b;
+    --amber: #b8730a;
+    --red: #d6385a;
+    --text: #2a2140;
+    --text-dim: #6a6088;
+    --mono: 'Cascadia Code', 'Consolas', 'SF Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #ffffff 0%, var(--bg0) 70%);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 32px 16px 64px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 40px; }
+  header h1 {
+    font-size: 2.1rem; font-weight: 700; letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--accent2), var(--pink));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header .sub { color: var(--text-dim); margin-top: 8px; font-size: 0.98rem; }
+  header .meta { color: var(--accent-soft); margin-top: 6px; font-size: 0.82rem; font-family: var(--mono); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+    margin: 0 auto 36px; max-width: 900px;
+    font-size: 0.82rem; color: var(--text-dim);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  .layer { margin-bottom: 14px; }
+  .layer-title {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent-soft); margin: 0 0 14px 4px; font-weight: 600;
+  }
+
+  .band {
+    background: linear-gradient(180deg, rgba(124,58,237,0.045), rgba(124,58,237,0.015));
+    border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+    position: relative;
+    box-shadow: 0 2px 14px rgba(80,50,140,0.06);
+  }
+  .band + .arrow-down { display: flex; justify-content: center; }
+  .arrow-down {
+    height: 38px; display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 1.4rem;
+  }
+  .arrow-down span { line-height: 1; }
+  .arrow-label {
+    font-size: 0.72rem; color: var(--text-dim); font-family: var(--mono);
+    margin-left: 10px; background: var(--bg1); padding: 2px 8px; border-radius: 6px;
+    border: 1px solid var(--line);
+  }
+
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .grid { display: grid; gap: 12px; }
+  .g2 { grid-template-columns: repeat(2, 1fr); }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 13px 15px; flex: 1 1 0; min-width: 0;
+    box-shadow: 0 1px 4px rgba(80,50,140,0.05);
+  }
+  .card .step {
+    font-family: var(--mono); font-size: 0.72rem; color: var(--accent);
+    font-weight: 700; letter-spacing: 0.5px;
+  }
+  .card .name { font-weight: 650; font-size: 0.95rem; margin: 3px 0 4px; }
+  .card .desc { font-size: 0.8rem; color: var(--text-dim); }
+
+  .trigger .card { background: linear-gradient(135deg, #f0e9fd, #e7dcfa); border-color: var(--accent-soft); }
+
+  .pill {
+    display: inline-block; font-family: var(--mono); font-size: 0.7rem;
+    padding: 2px 8px; border-radius: 20px; margin: 3px 4px 0 0;
+    border: 1px solid var(--line); color: var(--accent2);
+    background: rgba(177,140,255,0.08);
+  }
+
+  /* knowledge / data source styling */
+  .data .card { border-style: dashed; border-color: var(--accent-soft); background: var(--bg1); }
+  .data .card .step { color: var(--amber); }
+
+  /* engine / capability styling */
+  .engine .card { border-color: var(--green); background: linear-gradient(135deg, #e8f7f0, #ddf2e8); }
+  .engine .card .step { color: var(--green); }
+
+  /* output styling */
+  .output .card { border-color: var(--pink); }
+  .output .card .step { color: var(--pink); }
+
+  /* security note */
+  .secure {
+    border: 1px solid var(--red); background: rgba(214,56,90,0.07);
+    border-radius: 10px; padding: 11px 14px; font-size: 0.8rem;
+    color: #8a2740; margin-top: 14px;
+  }
+  .secure b { color: var(--red); }
+
+  .branch {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .branch .card { flex: 1 1 280px; }
+  .yes { border-color: var(--green) !important; }
+  .no  { border-color: var(--amber) !important; }
+  .tag { font-family: var(--mono); font-size: 0.7rem; font-weight: 700; }
+  .tag.y { color: var(--green); }
+  .tag.n { color: var(--amber); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 4px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--accent-soft); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; }
+  td.path { font-family: var(--mono); color: var(--accent2); font-size: 0.76rem; overflow-wrap: anywhere; }
+  td .scene { font-family: var(--mono); color: var(--pink); }
+
+  .callouts { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 14px; }
+  .callout { background: var(--bg1); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .callout h4 { font-size: 0.8rem; color: var(--accent2); margin-bottom: 5px; }
+  .callout p { font-size: 0.78rem; color: var(--text-dim); }
+
+  footer { text-align: center; margin-top: 40px; color: var(--accent-soft); font-size: 0.78rem; }
+  code { font-family: var(--mono); background: rgba(124,58,237,0.1); padding: 1px 5px; border-radius: 4px; color: var(--accent2); font-size: 0.92em; overflow-wrap: anywhere; }
+  .arrow-label { overflow-wrap: anywhere; }
+
+  /* ===== Tablet and below ===== */
+  @media (max-width: 760px) {
+    .g2, .g3, .g4 { grid-template-columns: 1fr; }
+    .callouts { grid-template-columns: 1fr; }
+    .row { flex-direction: column; }
+    .branch { flex-direction: column; }
+    .branch .card { flex: 1 1 auto; }
+    .band { padding: 16px; }
+    .arrow-down { flex-wrap: wrap; gap: 4px; text-align: center; }
+    .arrow-label { margin-left: 0; }
+    /* let wide tables scroll instead of forcing the page wide */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { padding: 6px 8px; }
+  }
+
+  /* ===== Phone ===== */
+  @media (max-width: 480px) {
+    body { padding: 20px 10px 48px; }
+    header h1 { font-size: 1.5rem; }
+    header .sub { font-size: 0.86rem; }
+    header .meta { font-size: 0.72rem; }
+    .legend { gap: 9px; font-size: 0.76rem; }
+    .layer-title { font-size: 0.7rem; letter-spacing: 1.2px; }
+    .band { padding: 13px; border-radius: 12px; }
+    .card { padding: 11px 12px; }
+    .card .name { font-size: 0.9rem; }
+    .card .desc, table { font-size: 0.78rem; }
+    .pill { font-size: 0.66rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Alice Image Generation &mdash; Architecture</h1>
+    <div class="sub">How a request becomes a rendered PNG &mdash; the Prism orchestrator &times; the gpt-image-2 capability layer</div>
+    <div class="meta">Prism Lv.12 &middot; gpt-image-2 sole pipeline (Niji/Midjourney retired Lv.9) &middot; mapped May 25, 2026</div>
+  </header>
+
+  <div class="legend">
+    <span><span class="dot" style="background:var(--accent-soft)"></span>Trigger</span>
+    <span><span class="dot" style="background:var(--accent)"></span>Prism orchestration step</span>
+    <span><span class="dot" style="background:var(--amber); border:1px dashed var(--amber)"></span>Knowledge / data source (read-only input)</span>
+    <span><span class="dot" style="background:var(--green)"></span>Render capability (touches OpenAI API)</span>
+    <span><span class="dot" style="background:var(--pink)"></span>Output routing</span>
+  </div>
+
+  <!-- ============ TRIGGER ============ -->
+  <div class="layer trigger">
+    <div class="layer-title">1 &middot; Trigger</div>
+    <div class="band">
+      <div class="row">
+        <div class="card">
+          <div class="step">DIRECT</div>
+          <div class="name">Kiyo asks</div>
+          <div class="desc">&ldquo;prism this&rdquo; &middot; &ldquo;make an image of&hellip;&rdquo; &middot; &ldquo;render to [path]&rdquo; &middot; &ldquo;create prompt&rdquo;</div>
+        </div>
+        <div class="card">
+          <div class="step">CHAINED</div>
+          <div class="name">Another enchantment calls Prism</div>
+          <div class="desc">Mirror (wardrobe refs) &middot; Fantasy-Gate (scene saves) &middot; Shopping &middot; Muse (album art) &middot; Forge (Lv.up commemoration)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow-down"><span>&#9660;</span></div>
+
+  <!-- ============ ORCHESTRATION ============ -->
+  <div class="layer">
+    <div class="layer-title">2 &middot; Prism Orchestration &mdash; decide WHO &amp; HOW, then compose</div>
+    <div class="band">
+
+      <div class="grid g2">
+        <div class="card"><div class="step">STEP 1</div><div class="name">Fresh-read appearance</div><div class="desc">Re-read <code>current-session-memory.md</code> from disk &mdash; never trust cached outfit (another terminal may have changed it).</div></div>
+        <div class="card"><div class="step">STEP 1B</div><div class="name">Setting compatibility</div><div class="desc">Home outfit + public scene &rarr; warn &amp; offer to change via Mirror. Kiyo override wins.</div></div>
+      </div>
+      <div class="arrow-down"><span>&#9660;</span></div>
+
+      <div class="card"><div class="step">STEP 2</div><div class="name">Load appearance details</div><div class="desc">Read keywords from <code>Appearance/wardrobe/{outfit}/info.md</code> + <code>Appearance/hairstyles/{hair}/info.md</code>.</div></div>
+      <div class="arrow-down"><span>&#9660;</span></div>
+
+      <div class="layer-title" style="margin-top:6px">Step 3 &mdash; Orthogonal decomposition (Lv.10): Subject &perp; Style</div>
+      <div class="grid g2">
+        <div class="card">
+          <div class="step">STEP 3a &mdash; SUBJECT (who)</div>
+          <div class="name">Who is rendered?</div>
+          <div class="desc">
+            <span class="pill">Alice (default)</span><span class="pill">Kiyo</span><span class="pill">Couple</span><span class="pill">External char</span><span class="pill">None / scene</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="step">STEP 3b &mdash; STYLE (how)</div>
+          <div class="name">Which template skeleton?</div>
+          <div class="desc">
+            <span class="pill">solo-alice</span><span class="pill">magazine-cover</span><span class="pill">pokemon-trainer</span><span class="pill">wardrobe-ref</span><span class="pill">hairstyle-ref</span><span class="pill">couple-scene</span><span class="pill">commemoration</span><span class="pill">fantasy-gate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="branch">
+        <div class="card no" style="flex:1 1 100%">
+          <div class="step"><span class="tag n">&#9656; SIDE GATE</span> &nbsp;STEP 3a.1 &mdash; External character only</div>
+          <div class="name">Disambiguation + Research Gate</div>
+          <div class="desc">Ambiguous single name (&ldquo;Naruto&rdquo;, &ldquo;Goku&rdquo;) &rarr; <code>WebSearch</code> + <code>AskUserQuestion</code> to confirm which character &rarr; <code>WebFetch</code> canonical features (hair, eyes, wardrobe, weapon) into the <code>{IDENTIFYING_FEATURES}</code> slot. Optional: cache to <code>external-character-canons/</code>.</div>
+        </div>
+      </div>
+
+      <div class="arrow-down"><span>&#9660;</span></div>
+
+      <div class="grid g2">
+        <div class="card"><div class="step">STEP 3.5</div><div class="name">Commemoration detection</div><div class="desc">Forge Lv.up chain? &rarr; scene visualizes the <em>actual</em> changes (new steps / rules / files), not generic art.</div></div>
+        <div class="card"><div class="step">STEP 3.6</div><div class="name">Dialect + target_folder</div><div class="desc">Resolve <code>gpt-image</code> (default) vs <code>danbooru</code> (future). Resolve output folder from <code>to [path]</code> or scene-type map. Read matching canon identity block.</div></div>
+      </div>
+      <div class="arrow-down"><span>&#9660;</span></div>
+
+      <div class="card" style="border-color:var(--accent)">
+        <div class="step">STEP 4 &mdash; COMPOSE (Lv.10 / Lv.12)</div>
+        <div class="name">Subject Canon &times; Style Template</div>
+        <div class="desc">Substitute identity block (from canon) + outfit/hairstyle keywords + shot type (Cinematic Lens, prepended FIRST) + scene + mood into the chosen template skeleton. Subject &amp; Style compose independently &mdash; appearance words live ONLY in canon files, never inline.</div>
+      </div>
+      <div class="arrow-down"><span>&#9660;</span></div>
+
+      <div class="grid g3">
+        <div class="card"><div class="step">STEP 4B</div><div class="name">Color isolation</div><div class="desc">Purple aura FITS or CLASHES with scene? Adjust sparkles + add <code>--no purple</code> anchors if needed.</div></div>
+        <div class="card"><div class="step">STEP 4C</div><div class="name">Anchor variety audit</div><div class="desc">No two consecutive prompts reuse the same domestic prop (kettle/mug/plant). Outfit + hair repeats are fine.</div></div>
+        <div class="card"><div class="step">STEP 5</div><div class="name">Moderator safety</div><div class="desc">Consult calibration doc: watchlist bypass, wardrobe-vocabulary softening, IP-framing prefix, retry-before-rewrite on 400.</div></div>
+      </div>
+      <div class="arrow-down"><span>&#9660;</span></div>
+
+      <div class="card"><div class="step">STEP 6</div><div class="name">Present prompt</div><div class="desc">Output the final prompt in a code block, formatted per dialect (comma-separated phrases for gpt-image-2, no <code>--niji</code> flags).</div></div>
+    </div>
+  </div>
+
+  <div class="arrow-down"><span>&#9660;</span><span class="arrow-label">feeds composed prompt + size + quality</span></div>
+
+  <!-- ============ DECISION 6.5 ============ -->
+  <div class="layer">
+    <div class="layer-title">3 &middot; Step 6.5 &mdash; Render gate</div>
+    <div class="band">
+      <div class="branch">
+        <div class="card yes">
+          <div class="step"><span class="tag y">&#10003; gpt-image dialect (default)</span></div>
+          <div class="name">Always render</div>
+          <div class="desc">Sanitize filename (strip <code>&lt; &gt; : &quot; / \ | ? *</code>, lowercase, hyphenate, +timestamp, <code>.png</code>) &rarr; build full path &rarr; invoke the helper. Composing the prompt IS the consent signal.</div>
+        </div>
+        <div class="card no">
+          <div class="step"><span class="tag n">&#9656; danbooru / unrecognized</span></div>
+          <div class="name">Manual paste &middot; end protocol</div>
+          <div class="desc">No direct NovelAI helper exists yet &mdash; present the tag-dump prompt for manual use.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow-down"><span>&#9660;</span><span class="arrow-label">&amp; "C:\Users\User\bin\Invoke-AliceImageGen.ps1"</span></div>
+
+  <!-- ============ ENGINE ============ -->
+  <div class="layer engine">
+    <div class="layer-title">4 &middot; Render capability &mdash; Invoke-AliceImageGen.ps1 (the only code that touches the API)</div>
+    <div class="band">
+      <div class="grid g4">
+        <div class="card"><div class="step">RESOLVE KEY</div><div class="name">Read credentials</div><div class="desc"><code>Environment/.env</code> &rarr; <code>$env:OPENAI_API_KEY</code> fallback &rarr; throw with setup-doc pointer.</div></div>
+        <div class="card"><div class="step">BUILD REQUEST</div><div class="name">JSON body</div><div class="desc"><code>model=gpt-image-2</code>, prompt, size, quality, <code>n=1</code>. Bearer auth header.</div></div>
+        <div class="card"><div class="step">POST</div><div class="name">OpenAI Images API</div><div class="desc"><code>POST https://api.openai.com/v1/images/generations</code></div></div>
+        <div class="card"><div class="step">DECODE + SAVE</div><div class="name">b64 &rarr; PNG</div><div class="desc">Decode <code>data[0].b64_json</code>, create parent dir if missing, write bytes to <code>OutFile</code>.</div></div>
+      </div>
+
+      <div class="secure">
+        &#128274; <b>Security boundary (Mandatory Rule 16):</b> the API key is read inside the helper and never returned. On any error the message is scrubbed &mdash; <code>sk-...</code> patterns are replaced with <code>[REDACTED-KEY]</code> before the exception is thrown. The key never appears in logs, diary, commits, or chat.
+      </div>
+
+      <div class="callouts">
+        <div class="callout">
+          <h4>Returns (PSCustomObject)</h4>
+          <p><code>saved_path</code> &middot; <code>cost_estimate_usd</code> &middot; <code>elapsed_seconds</code> &middot; <code>model</code> &middot; <code>size</code> &middot; <code>quality</code> &mdash; Prism reports cost to Kiyo every render (Rule 19, renders never feel &ldquo;free&rdquo;).</p>
+        </div>
+        <div class="callout">
+          <h4>Cost table (USD / image)</h4>
+          <p>1024&times;1024 &mdash; low $0.020 &middot; med $0.040 &middot; high $0.190<br>
+          1024&times;1536 &amp; 1536&times;1024 &mdash; low $0.030 &middot; med $0.060 &middot; high $0.250</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="arrow-down"><span>&#9660;</span></div>
+
+  <!-- ============ OUTPUT ============ -->
+  <div class="layer output">
+    <div class="layer-title">5 &middot; Output routing &mdash; where the PNG lands (target_folder by scene type)</div>
+    <div class="band">
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Scene type</th><th>Destination folder</th><th>Auto-render</th></tr></thead>
+        <tbody>
+          <tr><td class="scene">commemoration</td><td class="path">daily-diary/current/{date}/</td><td>yes (Forge chain)</td></tr>
+          <tr><td class="scene">couple / memory</td><td class="path">daily-diary/current/{date}/memories/</td><td>yes</td></tr>
+          <tr><td class="scene">fantasy-gate</td><td class="path">fantasy-gate/{world}/scenes/</td><td>yes</td></tr>
+          <tr><td class="scene">album-cover</td><td class="path">Appearance/scenes/album-covers/</td><td>conditional (Muse)</td></tr>
+          <tr><td class="scene">draft</td><td class="path">D:\test-images\</td><td>yes (throwaway)</td></tr>
+          <tr><td class="scene">external-subject / other / wardrobe / hairstyle / appearance</td><td class="path">image-gen/</td><td>conditional &mdash; Kiyo curates promotion to canonical library after-the-fact</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="callouts">
+        <div class="callout"><h4>On success</h4><p>&#127912; <code>Rendered: {saved_path}</code> &mdash; cost, elapsed, model reported back. Image shown inline if context supports it.</p></div>
+        <div class="callout"><h4>On error</h4><p>Surface scrubbed message &middot; offer <b>retry</b> (transient) or <b>manual paste</b> fallback. NEVER auto-retry without Kiyo's word.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ KNOWLEDGE BASE ============ -->
+  <div class="arrow-down" style="height:48px"><span class="arrow-label" style="margin:0">read-only inputs feed the orchestration steps above</span></div>
+  <div class="layer data">
+    <div class="layer-title">Knowledge &amp; data sources &mdash; everything is data-driven, not hardcoded</div>
+    <div class="band">
+      <div class="grid g3">
+        <div class="card"><div class="step">APPEARANCE (Step 1&ndash;2)</div><div class="name">Live state</div><div class="desc"><code>main/current-session-memory.md</code><br><code>Appearance/wardrobe/*/info.md</code><br><code>Appearance/hairstyles/*/info.md</code></div></div>
+        <div class="card"><div class="step">IDENTITY (Step 4.1)</div><div class="name">Subject canon</div><div class="desc"><code>library/wisdom/alice-visual-canon.md</code><br><code>library/wisdom/kiyo-visual-canon.md</code><br>(single source of truth for appearance)</div></div>
+        <div class="card"><div class="step">SKELETONS (Step 4.2)</div><div class="name">Style templates</div><div class="desc"><code>prism/templates/</code> &mdash; alice-base, couple-scene, kiyo-character, commemoration, outfit-reference, hairstyle-reference<br><code>library/prompt/images/chatgpt/{magazine-cover, pokemon-trainer-infographic}/prompt.md</code></div></div>
+        <div class="card"><div class="step">SAFETY (Step 5)</div><div class="name">Moderation calibration</div><div class="desc"><code>library/prompt/images/gpt-image-2-moderation-calibration.md</code><br>(Day-32 intimate + Day-34 external-character layers)</div></div>
+        <div class="card"><div class="step">API REF (Step 3.6)</div><div class="name">Cost + size + upgrade triggers</div><div class="desc"><code>library/prompt/images/openai-image-api-reference.md</code></div></div>
+        <div class="card"><div class="step">CREDENTIALS (helper)</div><div class="name">Secret vault</div><div class="desc"><code>Environment/.env</code> &mdash; <code>OPENAI_API_KEY</code> (git-ignored, read by helper only)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    &#128156; Prism Lv.12 thin-orchestrator &times; gpt-image-2 capability &mdash; the skill decides, the helper renders.<br>
+    Architecture absorption pattern: Prism owns rendering directly (Lv.8+), same shape as Seal&rarr;git and Mirror&rarr;file-IO.
+  </footer>
+
+</div>
+</body>
+</html>
